@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useGesture } from '@use-gesture/react';
 
-
 const DEFAULT_IMAGES = [
   {
     src: 'https://res.cloudinary.com/drvug594q/image/upload/v1753683833/utc7v1i3i7yppqi32bse_yhxtvi.avif',
@@ -33,10 +32,9 @@ const DEFAULT_IMAGES = [
     alt: 'Social media image'
   },
   {
-    src:'https://res.cloudinary.com/drvug594q/image/upload/v1752572726/Screenshot_2025-07-15_at_3.14.38_PM_f7voeg.png',
-    
+    src: 'https://res.cloudinary.com/drvug594q/image/upload/v1752572726/Screenshot_2025-07-15_at_3.14.38_PM_f7voeg.png',
+    alt: 'Achievement showcase'
   },
-
 ];
 
 const DEFAULTS = {
@@ -115,7 +113,6 @@ function computeItemBaseRotation(offsetX, offsetY, sizeX, sizeY, segments) {
 }
 
 export default function Achievement({
-  
   images = DEFAULT_IMAGES,
   fit = 0.5,
   fitBasis = 'auto',
@@ -134,7 +131,7 @@ export default function Achievement({
   openedImageBorderRadius = '35px',
   grayscale = true,
   autoRotate = true,
-  autoRotateSpeed = 10 // degrees per second on Y axis
+  autoRotateSpeed = 10
 }) {
   const rootRef = useRef(null);
   const mainRef = useRef(null);
@@ -214,7 +211,6 @@ export default function Achievement({
       let radius = basis * fit;
       const heightGuard = h * 1.35;
       radius = Math.min(radius, heightGuard);
-      // On small screens, do not enforce a large minimum radius so the sphere fits.
       const isMobileWidth = w < 768;
       const effectiveMinRadius = isMobileWidth ? 0 : minRadius;
       radius = clamp(radius, effectiveMinRadius, maxRadius);
@@ -275,13 +271,12 @@ export default function Achievement({
     applyTransform(rotationRef.current.x, rotationRef.current.y);
   }, []);
 
-  // Auto-rotate when idle (no dragging, no image enlarged, not hovering)
   useEffect(() => {
     let rafId;
     let last = performance.now();
 
     const tick = (now) => {
-      const dt = (now - last) / 1000; // seconds
+      const dt = (now - last) / 1000;
       last = now;
 
       const isEnlarging = rootRef.current?.getAttribute('data-enlarging') === 'true';
@@ -299,12 +294,11 @@ export default function Achievement({
     };
   }, [autoRotate, autoRotateSpeed]);
 
-  // Hover tilt and scroll-to-rotate effects
   useEffect(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
 
-    const maxTilt = 6; // degrees
+    const maxTilt = 6;
 
     const onEnter = () => {
       hoveringRef.current = true;
@@ -329,7 +323,6 @@ export default function Achievement({
     };
 
     const onWheel = (e) => {
-      // Rotate sphere with mouse wheel for a subtle scroll interaction
       e.preventDefault();
       const delta = e.deltaY || e.wheelDelta || 0;
       const nextY = wrapAngleSigned(rotationRef.current.y + delta * 0.1);
@@ -593,7 +586,6 @@ export default function Achievement({
                 openingRef.current = false;
                 if (!draggingRef.current && rootRef.current?.getAttribute('data-enlarging') !== 'true')
                   document.body.classList.remove('dg-scroll-lock');
-                // restore wrapper overflow after close completes
                 if (wrapperRef.current) wrapperRef.current.style.overflow = '';
               }, 300);
             });
@@ -627,7 +619,6 @@ export default function Achievement({
     const parent = el.parentElement;
     focusedElRef.current = el;
     el.setAttribute('data-focused', 'true');
-    // allow overlay to overflow the circular wrapper during enlargement
     if (wrapperRef.current) wrapperRef.current.style.overflow = 'visible';
 
     const offsetX = getDataNumber(parent, 'offsetX', 0);
@@ -810,29 +801,139 @@ export default function Achievement({
       }
     }
     
-    /* Make tiles square on mobile only */
-    @media (max-width: 767px) {
-      .sphere-root {
-        --tile-radius: 0px !important; /* square corners for tiles on mobile */
-        --enlarge-radius: 0px !important; /* square enlarged view on mobile */
+    /* Desktop - Keep original behavior */
+    @media (min-width: 768px) {
+      .item__image {
+        position: absolute;
+        inset: 10px;
+        border-radius: var(--tile-radius, 12px);
+        overflow: hidden;
+        cursor: pointer;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transition: transform 300ms;
+        pointer-events: auto;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        outline: none;
+      }
+      
+      .item__image:focus {
+        outline: 2px solid #4A90E2;
+        outline-offset: 2px;
+        z-index: 100;
+      }
+      
+      .item__image:focus-visible {
+        outline: 2px solid #4A90E2;
+        outline-offset: 2px;
+      }
+      
+      .item__image:hover {
+        transform: scale(1.05) translateZ(10px);
+        z-index: 50;
+      }
+      
+      .item__image--reference {
+        position: absolute;
+        inset: 10px;
+        pointer-events: none;
       }
     }
     
-    /* Fine-tune for specific small widths */
+    /* Mobile - Apply accessibility improvements */
+    @media (max-width: 767px) {
+      .sphere-root {
+        --tile-radius: 8px !important;
+        --enlarge-radius: 12px !important;
+        --min-touch-size: 48px;
+      }
+      
+      .sphere-item {
+        min-width: var(--min-touch-size);
+        min-height: var(--min-touch-size);
+      }
+      
+      .item__image {
+        position: absolute;
+        inset: max(8px, calc((100% - var(--min-touch-size)) / 2));
+        min-width: var(--min-touch-size);
+        min-height: var(--min-touch-size);
+        border-radius: var(--tile-radius, 8px);
+        overflow: hidden;
+        cursor: pointer;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transition: transform 300ms;
+        pointer-events: auto;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        outline: none;
+      }
+      
+      .item__image:focus {
+        outline: 2px solid #4A90E2;
+        outline-offset: 2px;
+        z-index: 100;
+      }
+      
+      .item__image:active {
+        transform: scale(0.98) translateZ(-5px);
+      }
+      
+      .item__image--reference {
+        position: absolute;
+        inset: max(8px, calc((100% - var(--min-touch-size)) / 2));
+        min-width: var(--min-touch-size);
+        min-height: var(--min-touch-size);
+        pointer-events: none;
+      }
+    }
+    
     @media (max-width: 425px) {
-      .sphere-root { --tile-radius: 0px !important; --enlarge-radius: 0px !important; }
-      .item__image { inset: 7px; }
+      .sphere-root { 
+        --tile-radius: 6px !important; 
+        --enlarge-radius: 8px !important;
+        --min-touch-size: 50px;
+      }
+      .item__image { 
+        inset: max(6px, calc((100% - var(--min-touch-size)) / 2));
+      }
+      .item__image--reference {
+        inset: max(6px, calc((100% - var(--min-touch-size)) / 2));
+      }
+      .stage { transform: scale(1.08); }
+    }
+    
+    @media (max-width: 375px) {
+      .sphere-root { 
+        --tile-radius: 4px !important; 
+        --enlarge-radius: 6px !important;
+        --min-touch-size: 52px;
+      }
+      .item__image { 
+        inset: max(5px, calc((100% - var(--min-touch-size)) / 2));
+      }
+      .item__image--reference {
+        inset: max(5px, calc((100% - var(--min-touch-size)) / 2));
+      }
       .stage { transform: scale(1.12); }
     }
-    @media (max-width: 375px) {
-      .sphere-root { --tile-radius: 0px !important; --enlarge-radius: 0px !important; }
-      .item__image { inset: 6px; }
-      .stage { transform: scale(1.18); }
-    }
+    
     @media (max-width: 320px) {
-      .sphere-root { --tile-radius: 0px !important; --enlarge-radius: 0px !important; --viewer-pad: 6px !important; }
-      .item__image { inset: 4px; }
-      .stage { transform: scale(1.22); }
+      .sphere-root { 
+        --tile-radius: 4px !important; 
+        --enlarge-radius: 4px !important; 
+        --viewer-pad: 8px !important;
+        --min-touch-size: 54px;
+      }
+      .item__image { 
+        inset: max(4px, calc((100% - var(--min-touch-size)) / 2));
+      }
+      .item__image--reference {
+        inset: max(4px, calc((100% - var(--min-touch-size)) / 2));
+      }
+      .stage { transform: scale(1.15); }
     }
     
     body.dg-scroll-lock {
@@ -844,30 +945,12 @@ export default function Achievement({
       touch-action: none !important;
       overscroll-behavior: contain !important;
     }
-    .item__image {
-      position: absolute;
-      inset: 10px;
-      border-radius: var(--tile-radius, 12px);
-      overflow: hidden;
-      cursor: pointer;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      transition: transform 300ms;
-      pointer-events: auto;
-      -webkit-transform: translateZ(0);
-      transform: translateZ(0);
-    }
-    .item__image--reference {
-      position: absolute;
-      inset: 10px;
-      pointer-events: none;
-    }
   `;
 
   return (
     <div className="relative">
       <div className="w-full text-center mb-1 md:mb-3">
-        <h2 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg tracking-tight ">Our Achievements</h2>
+        <h2 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg tracking-tight">Our Achievements</h2>
       </div>
       <style dangerouslySetInnerHTML={{ __html: cssStyles }} />
       <div ref={wrapperRef} className="relative mx-auto w-full h-[400px] md:h-auto md:aspect-square max-w-[700px] md:max-w-[800px] rounded-none md:rounded-full overflow-hidden transition-transform duration-300">
@@ -918,7 +1001,14 @@ export default function Achievement({
                       className="item__image absolute block overflow-hidden cursor-pointer bg-gray-200 transition-transform duration-300"
                       role="button"
                       tabIndex={0}
-                      aria-label={it.alt || 'Open image'}
+                      aria-label={it.alt || `Achievement image ${i + 1}`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          if (performance.now() - lastDragEndAtRef.current < 80) return;
+                          openItemFromElement(e.currentTarget);
+                        }
+                      }}
                       onClick={e => {
                         if (performance.now() - lastDragEndAtRef.current < 80) return;
                         openItemFromElement(e.currentTarget);
@@ -935,7 +1025,7 @@ export default function Achievement({
                       <img
                         src={it.src}
                         draggable={false}
-                        alt={it.alt}
+                        alt={it.alt || `Achievement ${i + 1}`}
                         className="w-full h-full object-cover pointer-events-none"
                         style={{
                           backfaceVisibility: 'hidden',
