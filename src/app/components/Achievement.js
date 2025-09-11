@@ -796,6 +796,20 @@ export default function Achievement({
       transform: rotateY(calc(var(--rot-y) * (var(--offset-x) + ((var(--item-size-x) - 1) / 2)) + var(--rot-y-delta, 0deg))) 
                  rotateX(calc(var(--rot-x) * (var(--offset-y) - ((var(--item-size-y) - 1) / 2)) + var(--rot-x-delta, 0deg))) 
                  translateZ(var(--radius));
+      /* Ensure touch targets are properly spaced */
+      touch-action: manipulation;
+    }
+    
+    /* Improve touch feedback on mobile */
+    @media (max-width: 768px) {
+      .item__image {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+        -webkit-touch-callout: none;
+      }
+      .item__image:active {
+        transform: scale(0.96);
+        transition: transform 100ms ease;
+      }
     }
     
     .sphere-root[data-enlarging="true"] .scrim {
@@ -819,32 +833,52 @@ export default function Achievement({
     }
     
     /* Fine-tune for specific small widths */
-    @media (max-width: 425px) {
-      .sphere-root { --tile-radius: 0px !important; --enlarge-radius: 0px !important; }
+    @media (max-width: 768px) {
+      .sphere-root { 
+        --tile-radius: 0px !important; 
+        --enlarge-radius: 0px !important;
+        --item-spacing: 6px;
+      }
       .item__image { 
-        inset: 6px; 
-        min-width: 40px; /* Slightly smaller but still touch-friendly */
+        inset: var(--item-spacing);
+        min-width: 44px;
+        min-height: 44px;
+      }
+      .stage { 
+        transform: scale(1.15);
+        margin: 0 auto;
+      }
+      /* Adjust sphere size on mobile */
+      .sphere {
+        transform: translateZ(calc(var(--radius) * -1)) scale(0.95);
+      }
+    }
+    @media (max-width: 480px) {
+      .sphere-root { 
+        --item-spacing: 5px;
+        --radius: 280px !important;
+      }
+      .item__image { 
+        min-width: 42px;
+        min-height: 42px;
+      }
+      .stage { 
+        transform: scale(1.2);
+      }
+    }
+    @media (max-width: 360px) {
+      .sphere-root { 
+        --item-spacing: 4px;
+        --radius: 260px !important;
+        --viewer-pad: 8px !important;
+      }
+      .item__image { 
+        min-width: 40px;
         min-height: 40px;
       }
-      .stage { transform: scale(1.12); }
-    }
-    @media (max-width: 375px) {
-      .sphere-root { --tile-radius: 0px !important; --enlarge-radius: 0px !important; }
-      .item__image { 
-        inset: 5px;
-        min-width: 36px; /* Ensure minimum touch target size on small screens */
-        min-height: 36px;
+      .stage { 
+        transform: scale(1.25);
       }
-      .stage { transform: scale(1.18); }
-    }
-    @media (max-width: 320px) {
-      .sphere-root { --tile-radius: 0px !important; --enlarge-radius: 0px !important; --viewer-pad: 8px !important; }
-      .item__image { 
-        inset: 4px;
-        min-width: 32px; /* Minimum touch target size for smallest screens */
-        min-height: 32px;
-      }
-      .stage { transform: scale(1.22); }
     }
     
     body.dg-scroll-lock {
